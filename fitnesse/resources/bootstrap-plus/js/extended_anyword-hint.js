@@ -5,6 +5,7 @@
 
 var autoCompleteJson;
 var autocompletes = [];
+var searcher;
 
 
 function loadAutoCompletesFromResponder() {
@@ -44,6 +45,7 @@ function loadAutoCompletesFromResponder() {
     		     $.each(result.variables, function(vIndex, v) {
     		      autocompletes.push(v.varName);
     		     });
+             searcher = new FuzzySearch({source:autocompletes, score_acronym:true });
     		     $("#spinner").hide();
     		     $('.toggle-bar').show();
             },
@@ -87,71 +89,13 @@ function loadAutoCompletesFromResponder() {
     var range = options && options.range || RANGE;
     var cur = editor.getCursor(), curLine = editor.getLine(cur.line);
     var end = cur.ch, start = end;
-    while (start && word.test(curLine.charAt(start - 1))) --start;
+    while (start && "|:".indexOf(curLine.charAt(start - 1)) <0) --start;
     var curWord = start != end && curLine.slice(start, end).toLocaleLowerCase();
 
-
-    var list = options && options.list || [], seen = {};
-	function addIfMatch(newWord){
-          if ((!curWord || newWord.toLocaleLowerCase().lastIndexOf(curWord, 0) == 0) && !seen.hasOwnProperty(newWord)) {
-            seen[newWord] = true;
-            list.push(newWord);
-          }
-	}
+    var result = searcher.search(curWord);
+    return {list: result, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
 
 
-    var re = new RegExp(word.source, "g");
-    for (var dir = -1; dir <= 1; dir += 2) {
-      var line = cur.line, endLine = Math.min(Math.max(line + dir * range, editor.firstLine()), editor.lastLine()) + dir;
-      for (; line != endLine; line += dir) {
-        var text = editor.getLine(line), m;
-        while (m = re.exec(text)) {
-			//Don't match myself
-			if (line == cur.line && m.index == start) continue;
-			addIfMatch(m[0]);
-        }
-      }
-    }
-
-	autonames.forEach(function (item, index, array) {
-		addIfMatch(">" + item);
-	});
-	autocompletes.forEach(function (item, index, array) {
-		addIfMatch(item);
-	});
-
-    addIfMatch("script");
-    addIfMatch("debug script");
-    addIfMatch("storyboard");
-    addIfMatch("table template");
-    addIfMatch("conditional script");
-    addIfMatch("!today");
-    addIfMatch("!today (dd-MM-yyyy)");
-    addIfMatch("!monday");
-    addIfMatch("!tuesday");
-    addIfMatch("!wednesday");
-    addIfMatch("!thursday");
-    addIfMatch("!friday");
-    addIfMatch("!saturday");
-    addIfMatch("!sunday");
-    addIfMatch("!randomBSN");
-    addIfMatch("!randomInt");
-    addIfMatch("!randomString");
-    addIfMatch("!randomEmail");
-    addIfMatch("!monthsFromToday");
-    addIfMatch("!lastDayOfMonth");
-    addIfMatch("!weekDaysFromToday");
-    addIfMatch("!define");
-    addIfMatch("!defineDefault");
-    addIfMatch("!defineFromProperties");
-    addIfMatch("!defineDefaultFromProperties");
-    addIfMatch("!randomIBAN");
-    addIfMatch("!randomPostalCode");
-    addIfMatch("!randomDutchLicensePlate");
-
-    list.sort();
-
-    return {list: list, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
   });
 
 

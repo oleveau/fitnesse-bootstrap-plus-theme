@@ -4,8 +4,8 @@
 // Extended version to use ?autoComplete responder (com.github.tcnh)
 
 var autoCompleteJson;
-var autocompletes = [];
 var searcher;
+var classSearcher;
 
 
 function loadAutoCompletesFromResponder() {
@@ -28,7 +28,7 @@ function loadAutoCompletesFromResponder() {
             timeout: 20000,
             success: function(result) {
             autoCompleteJson = result;
-                $.each(result.classes, function(cIndex, c) {
+            $.each(result.classes, function(cIndex, c) {
                  $.each(c.constructors, function(constrIndex, constructor) {
                     autocompletes.push(constructor.usage.substring(2))
                  });
@@ -44,7 +44,9 @@ function loadAutoCompletesFromResponder() {
     		     });
     		     $.each(result.variables, function(vIndex, v) {
     		      autocompletes.push(v.varName);
-    		     });
+             });
+             
+             classSearcher = new FuzzySearch({source:autoCompleteJson.classes, score_acronym:true, keys:["constructors.*.usage"] });
              searcher = new FuzzySearch({source:autocompletes, score_acronym:true });
     		     $("#spinner").hide();
     		     $('.toggle-bar').show();
@@ -92,8 +94,46 @@ function loadAutoCompletesFromResponder() {
     while (start && "|:".indexOf(curLine.charAt(start - 1)) <0) --start;
     var curWord = start != end && curLine.slice(start, end).toLocaleLowerCase();
 
-    var result = searcher.search(curWord);
-    return {list: result, from: CodeMirror.Pos(cur.line, start), to: CodeMirror.Pos(cur.line, end)};
+    var result = [];
+    
+    var previousLineIndex = cur.line > 0 ? cur.line-1 : 0;
+    var previousLine = editor.getLine(previousLineIndex).trim();
+    var classLine = editor.getLine(previousLineIndex).trim();
+    while(previousLineIndex>0 && (classLine.startsWith("|") || classLine.startsWith("!|"))) {
+      previousLineIndex--;
+      classLine = editor.getLine(previousLineIndex).trim();
+    } 
+    classLine = editor.getLine(previousLineIndex+1).trim();
+
+    // We're on a query
+    var isScript = classLine.toLocaleLowerCase().indexOf("script") > 0;
+    var isFirstRow = previousLineIndex == cur.line-1;
+    var isSecRow = previousLineIndex == cur.line-2;
+
+    if(isFirstRow) {
+        result = classSearcher.search(curWord).map(r=>r.constructors[0].usage);
+      }
+      else if(isSecRow || isScript){
+        var className = classLine.split("|")[1].trim();
+        var resultClass = classSearcher.search(className);
+        if(resultClass != null){
+          if(curWord == false || curWord.trim().length == 0){
+            result = resultClass[0].methods.map(m => m.usage);
+          }
+          else {
+            var methodSearcher = new FuzzySearch({source:resultClass[0].methods, token_field_min_length:0, keys:["usage"]});
+            result = methodSearcher.search(curWord).map(r => r.usage);
+          }
+        }
+        else {
+          result = searcher.search(curWord);
+        }
+      }
+    else{
+      result = searcher.search(curWord);
+    }
+
+    return {list: result, from: CodeMirror.Pos(cur.line, (start >0 ? --start : start)), to: CodeMirror.Pos(cur.line, end)};
 
 
   });

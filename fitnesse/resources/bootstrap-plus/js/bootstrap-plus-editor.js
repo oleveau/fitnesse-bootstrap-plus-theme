@@ -46,13 +46,34 @@ function filterHelpList() {
         // Declare variables
         var input, filter;
         input = document.getElementById('filter');
-        filter = input.value.toUpperCase();
-        $(".togglebox").each(function(){ $(this).prop('checked', false); });
-        $("li.coll").each(function() {
-            $(this).removeClass( 'open' );
-            $(this).addClass( 'closed' );
-            $(this).removeAttr( 'style' );
+        filter = input.value;
+        
+        if(filter == ""){
+            autoCompleteJson.classes.forEach(c => c.readableName = c.oldReadableName);
+            filteredClasses = null;
+        }
+        else {
+            result = classFilter.search(filter);
+            filteredClasses = result;
+            filteredClasses.forEach(c => c.readableName = classFilter.highlight(c.oldReadableName));
+        }
+        
+
+        $('.toggle-bar').removeAttr('populated');
+        $('.helper-content').remove()
+        populateContext();
+        $('#filter').val(input.value);
+        $('#filter').focus();
+
+        $("#tree-fixtures").parent("li.coll").each(function(){
+            $(this).children("input").each(function(){
+                $(this).prop('checked', true);
+                });
+            $(this).removeClass("closed");
+            $(this).addClass("open");
             });
+       
+            /*
         $(".filterIt").each(function() {
             var parents = $(this).parents("li.coll");
             $(this).parent("li").removeAttr( 'style' );
@@ -92,7 +113,7 @@ function filterHelpList() {
                 $(this).closest("li").hide();
                 }
             });
-        }
+        }*/
     }
 
 
@@ -231,7 +252,7 @@ function populateContext(){
     helpList += '<li class="coll closed"><label for="tree-fixtures">Fixtures</label>';
        helpList += '<input class="togglebox" type="checkbox" id="tree-fixtures" />';
        helpList += '<ol id="fixtures">'
-        var sortedClasses = autoCompleteJson.classes.sort(dynamicSort("readableName"));
+        var sortedClasses = filteredClasses != null ? filteredClasses : autoCompleteJson.classes.sort(dynamicSort("readableName"));
         $.each(sortedClasses, function(cIndex, c) {
              helpList += '<li class="coll closed">';
              helpList += '<label for="help-' + helpId + '">' + c.readableName.UcFirst() + '</label>';
@@ -250,7 +271,7 @@ function populateContext(){
                 signatureList.push(cstr.readableName.toLowerCase() + '#' + cstr.parameters.length);
 
                 helpList += '<li class="docItem">';
-                helpList += '<i class="filterIt fa fa-plus-circle insert" aria-hidden="false" insertText="' + cstr.usage + '" title="' + c.readableName + '"></i>';
+                helpList += '<i class="filterIt fa fa-plus-circle insert" aria-hidden="false" insertText="' + cstr.usage + '" title="' + cstr.readableName + '"></i>';
                 helpList += '<b>' + cstr.usage + '</b><br />';
                 if(cstr.hasOwnProperty('docString') && cstr['docString'] ) {
                     helpList += cstr.docString.replace(/(?:\r\n|\r|\n)/g, '<br>');

@@ -6,7 +6,8 @@
 var autoCompleteJson;
 var searcher;
 var classSearcher;
-
+var classFilter;
+var filteredClasses;
 
 function loadAutoCompletesFromResponder() {
     $("#spinner").show();
@@ -45,8 +46,10 @@ function loadAutoCompletesFromResponder() {
     		     $.each(result.variables, function(vIndex, v) {
     		      autocompletes.push(v.varName);
              });
-             
+             filteredClasses = null;
+             result.classes.forEach(c => c.oldReadableName = c.readableName);
              classSearcher = new FuzzySearch({source:autoCompleteJson.classes, score_acronym:true, keys:["constructors.*.usage"] });
+             classFilter = new FuzzySearch({source:autoCompleteJson.classes, score_acronym:true, keys:["constructors.*.usage", "methods.*.usage"], thresh_relative_to_best:0.75, thresh_include:5.0, highlight_prefix:true });
              searcher = new FuzzySearch({source:autocompletes, score_acronym:true });
     		     $("#spinner").hide();
     		     $('.toggle-bar').show();

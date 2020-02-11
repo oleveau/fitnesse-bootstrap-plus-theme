@@ -119,6 +119,13 @@ function loadAutoCompletesFromResponder() {
         if(resultClass != null){
           if(curWord == false || curWord.trim().length == 0){
             result = resultClass[0].methods.map(m => m.usage);
+            // remove already added properties
+            var alreadyAdded = curLine.split('|').map(p => p.trim());
+            result = result.filter( r=> {
+              var rTrim = r.split('|')[1].trim();
+              if(rTrim == curWord) return true;
+              else return !alreadyAdded.includes(rTrim);
+            });
           }
           else {
             var methodSearcher = new FuzzySearch({source:resultClass[0].methods, token_field_min_length:0, keys:["usage"]});

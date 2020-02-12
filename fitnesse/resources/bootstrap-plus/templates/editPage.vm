@@ -82,7 +82,10 @@
         &nbsp;&nbsp;<a class="button validate">Validate</a>
     </fieldset>
 </form>
-<div id="helper-bar" class="side-bar">&nbsp;</div>
+<div id="helper-bar" class="side-bar">
+    <div class="helper-content">
+    <input type="text" class="form-control" id="filter" placeholder="Filter...">&nbsp;<button class="fa fa-undo" id="clearFilter" title="Clear Filter"></button>&nbsp;<button class="fa fa-refresh" id="resync" title="Reload Context"></button>
+</div>
 
 <link rel="stylesheet" type="text/css" href="${contextRoot}files/fitnesse/wysiwyg/editor.css" media="screen"/>
 <script src="${contextRoot}files/fitnesse/bootstrap-plus/js/codemirror/wysiwyg.js" type="text/javascript"></script>

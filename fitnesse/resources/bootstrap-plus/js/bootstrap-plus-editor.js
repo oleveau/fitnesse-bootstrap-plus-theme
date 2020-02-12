@@ -26,7 +26,7 @@ function savePage(target) {
             //Only reload helper if helper is closed
             if ($('#helper-bar').is(':hidden')) {
                 $('.toggle-bar').removeAttr('populated');
-                $('.helper-content').remove();
+                $('.helper-content-tree').remove();
                 $.when(loadAutoCompletesFromResponder()).done(function (a) {
                     populateContext();
                 });
@@ -60,10 +60,8 @@ function filterHelpList() {
         }
 
         $('.toggle-bar').removeAttr('populated');
-        $('.helper-content').remove()
+        $('.helper-content-tree').remove()
         populateContext();
-        $('#filter').val(input.value);
-        $('#filter').focus();
 
         $("#tree-fixtures").parent("li.coll").each(function(){
             $(this).children("input").each(function(){
@@ -176,9 +174,9 @@ function indexesOf(string, regex) {
 }
 
 function populateContext() {
-    var helpList = '<div class="helper-content" >';
+    var helpList = '<div class="helper-content-tree" >'
     var helpId = 0;
-    helpList += '<input type="text" class="form-control" id="filter" placeholder="Filter...">&nbsp;<button class="fa fa-undo" id="clearFilter" title="Clear Filter"></button>&nbsp;<button class="fa fa-refresh" id="resync" title="Reload Context"></button>';
+    
     helpList += '<ol id="side-bar-tree" class="tree">';
 
     helpList += '<li class="coll closed"><label for="tree-scenarios">Scenario\'s</label>';
@@ -332,8 +330,7 @@ function populateContext() {
     helpList += '</li>';
 
     helpList += '</ol></div>';
-
-    $('.side-bar').prepend(helpList);
+    $('.helper-content').append(helpList);
     $('.toggle-bar').attr('populated', 'true');
 }
 
@@ -660,7 +657,7 @@ $(document).ready(function () {
     $('body').on('click', '#resync', function (e) {
         e.preventDefault();
         $('.toggle-bar').removeAttr('populated');
-        $('.helper-content').remove();
+        $('.helper-content-tree').remove();
         $.when(loadAutoCompletesFromResponder()).done(function (a) {
             populateContext();
         });

@@ -94,15 +94,17 @@ function loadAutoCompletesFromResponder() {
     var range = options && options.range || RANGE;
     var cur = editor.getCursor(), curLine = editor.getLine(cur.line);
     var end = cur.ch, start = end;
-    while (start && "|:".indexOf(curLine.charAt(start - 1)) <0) --start;
-    var curWord = start != end && curLine.slice(start, end).toLocaleLowerCase();
+    while (start && "|".indexOf(curLine.charAt(start - 1)) <0) --start;
+    while (end && "|".indexOf(curLine.charAt(end - 1)) <0) ++end;
+    var curWord = start != end && curLine.slice(start, end-1).toLocaleLowerCase().trim();
+    var curWordLen = end-start;
 
     var result = [];
     
     var previousLineIndex = cur.line > 0 ? cur.line-1 : 0;
-    var previousLine = editor.getLine(previousLineIndex).trim();
     var classLine = editor.getLine(previousLineIndex).trim();
-    while(previousLineIndex>0 && (classLine.startsWith("|") || classLine.startsWith("!|"))) {
+    // Find the beginning of the table
+    while(previousLineIndex>0 && (classLine.startsWith("|") || classLine.startsWith("-|") || classLine.startsWith("|-") || classLine.startsWith("!|"))) {
       previousLineIndex--;
       classLine = editor.getLine(previousLineIndex).trim();
     } 
@@ -113,36 +115,39 @@ function loadAutoCompletesFromResponder() {
     var isFirstRow = previousLineIndex == cur.line-1;
     var isSecRow = previousLineIndex == cur.line-2;
 
-    if(isFirstRow) {
+    if(isFirstRow && curWord) {
         result = classSearcher.search(curWord).map(r=>r.constructors[0].usage);
       }
-      else if(isSecRow || isScript){
+      else if(isSecRow || isScript) {
         var className = classLine.split("|")[1].trim();
         var resultClass = classSearcher.search(className);
-        if(resultClass != null){
-          if(curWord == false || curWord.trim().length == 0){
+        if(resultClass != null) {
+          // if nothing to filter, display all columns
+          if(curWord == false || curWord.trim().length == 0) {
             result = resultClass[0].methods.map(m => m.usage);
-            // remove already added properties
-            var alreadyAdded = curLine.split('|').map(p => p.trim());
-            result = result.filter( r=> {
-              var rTrim = r.split('|')[1].trim();
-              if(rTrim == curWord) return true;
-              else return !alreadyAdded.includes(rTrim);
-            });
           }
           else {
             var methodSearcher = new FuzzySearch({source:resultClass[0].methods, token_field_min_length:0, keys:["usage"]});
             result = methodSearcher.search(curWord).map(r => r.usage);
           }
         }
-        else {
+        // we didn't find the fixtures, display evrything
+        else if(curWord) {
           result = searcher.search(curWord);
         }
+        // remove already added properties
+        var alreadyAdded = curLine.split('|').map(p => p.trim().toLocaleLowerCase());
+        result = result.filter( r=> {
+          var rTrim = r.split('|')[1].trim().toLocaleLowerCase();
+          if(rTrim == curWord) return true;
+          else return !alreadyAdded.includes(rTrim);
+        });
       }
+      // not first, not second, nothing to autocomplete
     else{
-      result = searcher.search(curWord);
-    }
 
-   return {list: result, from: CodeMirror.Pos(cur.line, (start >0 ? --start : start)), to: CodeMirror.Pos(cur.line, end)};
+    }
+    result =  [... new Set(result)].map(r => "|" + r.split("|")[1].trim().padEnd(curWordLen-1) + "|")
+   return {list: [... new Set(result)], from: CodeMirror.Pos(cur.line, (start >0 ? --start : start)), to: CodeMirror.Pos(cur.line, end)};
   });
 });

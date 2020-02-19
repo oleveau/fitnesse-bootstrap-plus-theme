@@ -74,7 +74,7 @@ function filterHelpList() {
 
 function getCellValues(line) {
     line = line.replace('||', '| |');
-    var pattern = /(!-.+-!|[^|]+)/g;
+    var pattern = /(!-.+-!|[^|:]+)/g;
     var match;
     var cells = [];
     do {
@@ -111,6 +111,7 @@ function getInfoForLine(line, returnParamCount) {
         }
         if ((!firstCell.endsWith('=')) &&
             (firstCell.startsWith('script') ||
+                firstCell.startsWith('query') ||
                 firstCell.endsWith('script') ||
                 firstCell.startsWith('storyboard'))) {
             containsConstructor = true;
@@ -208,6 +209,7 @@ function populateContext() {
        helpList += '<ol id="fixtures">';
         var sortedClasses = filteredClasses != null ? filteredClasses : autoCompleteJson.classes.sort(dynamicSort("readableName"));
         $.each(sortedClasses, function (cIndex, c) {
+            var isScript = false;
              helpList += '<li class="coll closed">';
              helpList += '<label for="help-' + helpId + '">' + c.readableName.UcFirst() + '</label>';
              helpList += '<input class="togglebox" type="checkbox" id="help-' + helpId + '" />';
@@ -222,8 +224,15 @@ function populateContext() {
              helpList += '<ul>';
 
              $.each(c.constructors, function (index, cstr) {
-                signatureList.push(cstr.readableName.toLowerCase() + '#' + cstr.parameters.length);
-
+                 var ctor = cstr.usage.toLocaleLowerCase().split("|")[1].trim() + '#' + cstr.parameters.length
+                signatureList.push(ctor);
+                if(ctor.startsWith("script:")){
+                    isScript = true;
+                    signatureList.push(ctor.replace("script:", "").trim());
+                }
+                if(ctor.startsWith("query:")){
+                    signatureList.push(ctor.replace("query:", "").trim());
+                }
                 helpList += '<li class="docItem">';
                 helpList += '<i class="filterIt fa fa-plus-circle insert" aria-hidden="false" insertText="' + cstr.usage + '" title="' + cstr.readableName + '"></i>';
                 helpList += '<b>' + cstr.usage + '</b><br />';
@@ -296,11 +305,14 @@ function populateContext() {
 
             helpList += '</li>';
             helpList += '</ol>';
-
-            if (m.parameters === undefined) {
-                signatureList.push(m.readableName.toLowerCase().trim() + '#0');
-            } else {
-                signatureList.push(m.readableName.toLowerCase().trim() + '#' + m.parameters.length);
+            if(isScript){
+                if (m.parameters === undefined) {
+                    signatureList.push(m.readableName.toLowerCase().trim() + '#0');
+                    signatureList.push("get " + m.readableName.toLowerCase().trim() + '#0');
+                } else {
+                    signatureList.push(m.readableName.toLowerCase().trim() + '#' + m.parameters.length);
+                    signatureList.push("set " + m.readableName.toLowerCase().trim() + '#' + m.parameters.length);
+                }
             }
             helpList += '</li>';
         });
@@ -342,6 +354,8 @@ function validateTestPage() {
     var tableType = 'unknown';
     var noOfColumns;
     var msgs = 0;
+    var tableColumns = [];
+    cm.operation(() => {
     for (var i = 0; i < totalLines; i++) {
         cm.setGutterMarker(i, 'CodeMirror-lint-markers', null);
         var lineContent = cm.doc.getLine(i).trim();
@@ -360,7 +374,10 @@ function validateTestPage() {
                     tableType = 'script';
                 } else if (firstCellVal == 'import' || firstCellVal == 'library' || firstCellVal == 'comment') {
                     tableType = 'ignore';
-                } else {
+                } else if (firstCellVal.indexOf('query') > -1) {
+                    tableType = "query";
+                } 
+                else {
                     tableType = 'treatAsDT';
                 }
             } else if (!lineContent.startsWith('|')) {
@@ -416,12 +433,43 @@ function validateTestPage() {
                         row++;
                         continue;
                     }
+                }  else if (tableType == "query") {
+                    if(row == 0) {
+                        
+                        lineContent = lineContent.replace(/([!-]*)(?=\|)/, '')
+                            .replace(/([a-z])([A-Z])/g, '$1 $2')
+                            .replace(/([A-Z])([a-z])/g, ' $1$2')
+                            .replace(/\ +/g, ' ').trim().toLowerCase();
+
+                        var infoForLine = getInfoForLine(lineContent, true)
+                        if(isCommentLine(lineContent)) {
+                            cm.setGutterMarker(i, "CodeMirror-lint-markers", null);
+                            continue;
+                        }
+                        
+                        var className = infoForLine.split("#")[0];
+                        
+                        if(!signatureList.includes(infoForLine) && !infoForLine.startsWith("#")) {
+                            var message = "Unknown fixture: " + className + " (Please use auto-complete )";
+                           cm.setGutterMarker(i, "CodeMirror-lint-markers", makeMarker(message, "warning"));
+                           msgs++;
+                           row++;
+                           continue;
+                        }
+                        
+                        var resultClass = classSearcher.search(className);
+                        if(resultClass != null && resultClass[0] != null) {
+                            tableColumns = resultClass[0].methods.map(m => m.usage.toLocaleLowerCase().split("|")[1].trim());
+                        }
+                        // for other rows, consider it as a DT
+                        tableType = "treatAsDT";
+                    }
                 } else if (tableType == 'treatAsDT') {
                     var ignoreParams;
                     var map_of_maps;
                     //Decision tables/datadriven scenariotables/table templates
                     if (row == 0) {
-                        ignoreParams = false;
+                        ignoreParams = true;
                         map_of_maps = false;
                         if (isCommentLine(lineContent)) {
                             cm.setGutterMarker(i, 'CodeMirror-lint-markers', null);
@@ -453,22 +501,62 @@ function validateTestPage() {
                         } else {
                             infoForLine = infoForLine.trim() + '#0';
                         }
+                        var className = infoForLine.split("#")[0];
+                        
                         if (!signatureList.includes(infoForLine) && !infoForLine.startsWith('#')) {
-                            var message = 'Unknown command: ' + infoForLine.split('#')[0] +
-                                ' (' + infoForLine.split('#')[1] + ' parameters)';
+                            var message = "Unknown fixture: " + className + " (Please use auto-complete)";
                             cm.setGutterMarker(i, 'CodeMirror-lint-markers', makeMarker(message, 'warning'));
                             msgs++;
                             row++;
                             continue;
                         }
-                    } else if (row == 1) {
-                        //Get expected columncount for rest of table
-                        if (isCommentLine(lineContent)) {
-                            cm.setGutterMarker(i, 'CodeMirror-lint-markers', null);
-                            continue;
+                        var resultClass = classSearcher.search(className);
+                        if(resultClass != null && resultClass[0] != null) {
+                            tableColumns = resultClass[0].methods.map(m => m.usage.toLocaleLowerCase().split("|")[1].trim());
                         }
-                        var cells = getCellValues(lineContent);
-                        noOfColumns = cells.length;
+                        
+                    } else if (row == 1) {
+                        if(tableColumns.length > 0){
+                            //Get expected columncount for rest of table
+                            if (isCommentLine(lineContent)) {
+                                cm.setGutterMarker(i, 'CodeMirror-lint-markers', null);
+                                continue;
+                            }
+                            var cells = getCellValues(lineContent).map(c => c.trim().toLocaleLowerCase());
+                            noOfColumns = cells.length;
+                            if(noOfColumns > tableColumns.length) {
+                                var message = "Wrong number of columns: " + noOfColumns + ", expected less than: " + tableColumns.length;
+                                cm.setGutterMarker(i, "CodeMirror-lint-markers", makeMarker(message, "warning"));
+                                row++;
+                                msgs++;
+                                continue;
+                            }
+                            var badColumns = cells.filter(ev => !tableColumns.includes(ev));
+                            if(badColumns.length > 0) {
+                                var message="";
+                                var displayAllCol = false;
+                                badColumns.forEach(bc =>{
+                                    if(bc.endsWith("?") && tableColumns.includes(bc.replace("?", "").trim())){
+                                        message += "Extra ? at the end of: \"" + bc + "\" ?\r\n";
+                                    }
+                                    else if(tableColumns.includes(bc + "?")) {
+                                        message += "Missing ? at the end of: \"" + bc + "\" ?\r\n";
+                                    }
+                                    else{
+                                        displayAllCol = true;
+                                        message += "Unknown column: \"" + bc + "\"\r\n";
+                                    }
+                                    if(displayAllCol){
+                                        message += "Available columns: "  + tableColumns.filter(el => !cells.includes(el)).join();
+                                    }
+                                })
+
+                                cm.setGutterMarker(i, "CodeMirror-lint-markers", makeMarker(message, displayAllCol ? "warning" : "hint"));
+                                row++;
+                                msgs++;
+                                continue;
+                            }
+                        }
                         row++;
                         continue;
                     } else {
@@ -511,9 +599,11 @@ function validateTestPage() {
         } else {
             row = 0;
             tableType = 'unknown';
+            tableColumns = [];
             cm.setGutterMarker(i, 'CodeMirror-lint-markers', null);
         }
     }
+    });
     setvalidationBadge(msgs);
     return msgs;
 }
@@ -557,7 +647,7 @@ function setNewContextBadge() {
 }
 
 var reservedWords = ['script', 'debug script', 'conditional script', 'storyboard', 'comment', 'table',
-    'scenario', 'conditional scenario', 'looping scenario', 'table template', 'show',
+    'scenario', 'conditional scenario', 'looping scenario', 'table template', 'show', 'query',
     'ensure', 'reject', 'check', 'check not', 'start', 'push fixture', 'pop fixture', '!', '-!', '-'];
 
 $(document).ready(function () {
@@ -656,6 +746,7 @@ $(document).ready(function () {
 
     $('body').on('click', '#resync', function (e) {
         e.preventDefault();
+        $('#filter').val('');
         $('.toggle-bar').removeAttr('populated');
         $('.helper-content-tree').remove();
         $.when(loadAutoCompletesFromResponder()).done(function (a) {

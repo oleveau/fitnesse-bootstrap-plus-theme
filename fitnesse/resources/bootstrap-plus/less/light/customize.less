@@ -9,13 +9,15 @@ body {
 #contentDiv {
   height: 100%;
   display: flex;
+  overflow-y: hidden;
+  padding-top: 55px;
 }
 
 #content {
   height: 100%;
   width: 100%;
+  padding-bottom: 10px;
   overflow-y: auto;
-  padding: 55px 0 100px;
 }
 
 article {
@@ -25,6 +27,10 @@ article {
 header,
 article {
   margin: 0 @page-margin-horizontal;
+}
+
+#articleWithSidebar {
+  margin: 0 25px;
 }
 
 footer {
@@ -306,7 +312,7 @@ span.error *{
   background-color: #ffffaa;
 }
 .meta {
-  color: #ee3333;
+  color: #5e12b1;
 }
 .ignore,
 span.ignore * {
@@ -517,7 +523,7 @@ fieldset[disabled] .btn-secondary.focus {
   .well-sm;
 }
 .propertiesPage table{
-box-shadow:none 
+box-shadow:none
 }
 .propertiesPage #symbolics td{
 vertical-align:middle;
@@ -565,7 +571,7 @@ font-size:12px;
     background-color: #7fd4ee;
     font-style:normal;
     margin-left:5px;
-    margin:2px; 
+    margin:2px;
 }
 
 .tag a {
@@ -1156,6 +1162,9 @@ a.test {
 
 #-shortcut-keys > div {
   background-color: #ffffff;
+  margin: 0;
+  top: 50%;
+  left: 50%;
 }
 
 kbd {
@@ -1189,27 +1198,82 @@ kbd {
 
 /* Sidebar */
 
-#sidebar {
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
+#closedSidebar {
   height: 100%;
-  padding: 65px 0 61px;
+  padding: 0 0 5px;
   background-color: #f8f8f8;
   border-right: 1px solid #e7e7e7;
-  overflow: auto;
+}
+
+#collapseSidebarDiv {
+  padding: 10px 4px;
+  cursor: pointer;
+}
+
+.collapseSidebarDivColor {
+  background-color: #e7e7e7;
+}
+
+#collapseSidebarText {
+  writing-mode: tb-rl;
+  transform: rotate(-180deg);
+  font-size: 0.95em;
+}
+
+#collapseSidebarIcon {
+  transform: rotate(-90deg);
+  font-size: 18px;
+}
+
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  height: 100%;
+  background-color: #f8f8f8;
+  border-right: 1px solid #e7e7e7;
+}
+
+.buttonSidebarDiv {
+  padding: 2px 10px 2px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  border-bottom: 1px solid #e7e7e7;
+}
+
+.buttonSidebar {
+  display: inline-block !important;
+  text-align: center;
+  vertical-align: middle;
+  touch-action: manipulation;
+  cursor: pointer;
+  line-height: 1.42857143 !important;
+  user-select: none;
+  font-weight: 600 !important;
+  text-decoration: none;
+  margin: 2px;
+  padding: 1px 5px;
+  font-size: 13px !important;
 }
 
 #highlight {
   background-color: #e7e7e7;
+  box-shadow: -100px 0 0 0 #e7e7e7, 100px 0 0 0 #e7e7e7;
 }
 
 .displayNone {
-  display: none;
+  display: none !important;
 }
 
 #sidebarContent {
-  padding: 0 15px;
+  height: 100%;
+  padding: 0 10px 10px;
+  overflow: auto;
+  white-space: nowrap;
+  display: flex;
+  margin-bottom: 0;
+  font-size: 0.9em;
 }
 
 #sidebarContent li {
@@ -1217,7 +1281,7 @@ kbd {
 }
 
 #sidebarContent ul {
-  padding-left: 18px;
+  padding-left: 15px;
 }
 
 #sidebarContent div {
@@ -1236,10 +1300,125 @@ kbd {
   text-decoration: line-through;
 }
 
+#sidebarContent .iconToggle {
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#sidebarContent .iconWidth {
+  display: inline-block;
+  width: 10px;
+}
+
+/* Test History */
+
 #testHistoryDiv{
   display:inline-block;
 }
 
 #testHistoryDiv > a {
   float:right;
+}
+
+/* Versionchecker */
+
+#versioncheck{
+  text-transform: capitalize;
+}
+
+#versioncheck > tbody > tr > td > p{
+  display:inline;
+}
+
+tr.check > td{
+  white-space: unset;
+}
+
+#versioncheck > tbody > tr:nth-child(1) > td{
+  white-space: normal;
+}
+
+.Outdated{
+  background-color: #ffdada;
+}
+
+.Up-to-date{
+  background-color: #defbde;
+}
+
+/* Scrollbar */
+
+.scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #888888;
+}
+
+.selected-error {
+  box-shadow: 0 0 5px 2px #ff0000;
+  padding: 2px;
+ }
+
+.toolchainTable {
+  position: relative;
+ }
+tr.scenario-detail > td {
+  padding: 18px 18px 5px 5px;
+ }
+
+.toolchainTable tr:first-child > td:first-child {
+    padding-left: 30px;
+}
+.toolchainTable tr:first-child > td:first-child:before {
+    text-align: center;
+    font: normal normal normal 16px/1 FontAwesome;
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    color: #5f5f5f;
+    padding: 1px 2px 2px 2px;
+    width: 20px;
+    height: 20px;
+    line-height: 18px;
+    content: "\f05a";
+}
+
+.scriptTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f120";
+ }
+.storyboardTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f030";
+ }
+.scenarioTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f00a";
+ }
+.tableTemplate > tbody > tr:first-child > td:first-child:before {
+  content: "\f022";
+ }
+.debugScriptTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f188";
+}
+.importTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f019";
+}
+.libraryTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f212";
+}
+.commentTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f292";
+}
+.toolchainTest .decisionTable > tbody > tr:first-child > td:first-child:before {
+  content: "\f0ce";
 }

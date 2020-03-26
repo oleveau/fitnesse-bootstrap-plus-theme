@@ -3,7 +3,7 @@ Bullet lists are created by prefixing a space a * to a line.
 Headers are created by prefixing a line with !1 or !2 or !3 or !4 or !5 or !6.
 Numbered lists are created by prefixing a space and a number to a line.
 A picture can be added by using the !img marker followed by a URL.
-Did you know there is a dark theme for the FitNesse toolchain?
+Did you know bootstrap-plus also has a dark theme for FitNesse?
 Did you know there is a contexthelper that contains all fixtures, methods, scenario's and slim symbols from your tests context?
 Did you know you add non-wiki files to the files section (Tools > Files)?
 Did you know you can add/edit templates when you go to /TemplateLibrary?
@@ -26,3 +26,8 @@ If you click 'Recent Changes' in the 'Tools' a history of changes to the page wi
 If you click 'Versions' in the 'Tools' a list of old versions of the page will be shown.
 If you click on 'Where Used' in the 'Tools' a list of every page that references that page will be shown.
 Writing a fitnesse page a day keeps the doctor away
+You can turn on file logging by using -l as a command line argument, read more <a href="/FitNesse.UserGuide.AdministeringFitNesse.LogFiles">here</a>.
+You can use <a href="/FitNesse.FullReferenceGuide.UserGuide.FitNesseWiki.WikiImport">Wiki Import</a> to import entire an Wiki or subwiki from another FitNesse site.
+You can use the <a href="/FitNesse.FullReferenceGuide.UserGuide.FitNesseWiki.FilesSection">Files Section</a> to acces and manage all non "wiki" files.
+You can find a list of your recently executed test <a href="/?testHistory">here</a>.
+You can find information on how to use a Symbolic Link <a href="/FitNesse.FullReferenceGuide.UserGuide.FitNesseWiki.SymbolicLinks">here</a>.

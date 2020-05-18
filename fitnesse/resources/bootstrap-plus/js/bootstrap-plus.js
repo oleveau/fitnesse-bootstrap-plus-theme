@@ -157,7 +157,7 @@ $(document).ready(function () {
 //    });
 
     // For Sidebar
-    if (!location.pathname.includes('FrontPage') && !location.pathname.includes('files') && getCookie('sidebar') == 'true') {
+    if (!location.pathname.endsWith('FrontPage') && !location.pathname.includes('files') && getCookie('sidebar') == 'true') {
         getSidebarContent(placeEverythingForSidebar);
     }
     else {
